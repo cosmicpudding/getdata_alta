@@ -86,8 +86,7 @@ def get_alta_dir(date, task_id, beam_nr, alta_exception):
 def getstatus_alta(date, task_id, beam):
     """
     Funtion to check if the data is on ALTA.
-    date (int or str): Date of the observing weekend of the data. Usually the first day of the weekend (Friday).
-    Format: YYMMDD
+    date (int or str): Date of the observation of the data. Format: YYMMDD
     task_id (int or str): ID number of the observation. Format: NNN
     beam (int or str): Beam number to copy. Format: NN
     return (bool): True if the file is available, False if not
@@ -96,7 +95,7 @@ def getstatus_alta(date, task_id, beam):
     cmd = "ils {}".format(altadir)
     retcode = subprocess.call(cmd.split(), stdout=FNULL, stderr=FNULL)
     return retcode == 0
-    
+
 ###################################################################################################
 
 
