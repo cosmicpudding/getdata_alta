@@ -17,6 +17,7 @@ FNULL = open(os.devnull, 'w')
 
 ###################################################################################################
 
+
 def parse_list(spec):
     """Convert a string specification like 00-04,07,09-12 into a list [0,1,2,3,4,7,9,10,11,12]
 
@@ -49,6 +50,7 @@ def parse_list(spec):
 
 ###################################################################################################
 
+
 def get_alta_dir(date, task_id, beam_nr, alta_exception):
     """Get the directory where stuff is stored in ALTA. Takes care of different historical locations
 
@@ -79,6 +81,23 @@ def get_alta_dir(date, task_id, beam_nr, alta_exception):
         return "/altaZone/archive/apertif_main/visibilities_default/{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS".format(**locals())
 
 ###################################################################################################
+
+
+def getstatus_alta(date, task_id, beam):
+    """
+    Funtion to check if the data is on ALTA.
+    date (int or str): Date of the observation of the data. Format: YYMMDD
+    task_id (int or str): ID number of the observation. Format: NNN
+    beam (int or str): Beam number to copy. Format: NN
+    return (bool): True if the file is available, False if not
+    """
+    altadir = get_alta_dir(date, int(task_id), int(beam), False)
+    cmd = "ils {}".format(altadir)
+    retcode = subprocess.call(cmd.split(), stdout=FNULL, stderr=FNULL)
+    return retcode == 0
+
+###################################################################################################
+
 
 def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exception=False, check_with_rsync=True):
     """Download data from ALTA using low-level IRODS commands.
@@ -175,6 +194,7 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exceptio
     logger.debug("Done getting data from ALTA")
 
 ###################################################################################################
+
 
 if __name__ == "__main__":
 
