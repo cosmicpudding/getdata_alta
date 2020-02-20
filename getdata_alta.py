@@ -99,7 +99,7 @@ def get_alta_dir(date, task_id, beam_nr, alta_exception, data_type="raw", data_p
                     **locals())
 
             # if no data product is specified, just check if the main directory exists
-            if dataproduct is not None:
+            if data_product is not None:
                 altadir = os.path.join(altadir, data_product)
 
             return altadir
