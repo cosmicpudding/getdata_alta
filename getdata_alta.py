@@ -51,7 +51,7 @@ def parse_list(spec):
 ###################################################################################################
 
 
-def get_alta_dir(date, task_id, beam_nr, data_type="raw", data_product=None, alta_exception):
+def get_alta_dir(date, task_id, beam_nr, alta_exception, data_type="raw", data_product=None):
     """Get the directory where stuff is stored in ALTA. Takes care of different historical locations
 
     Args:
@@ -59,6 +59,8 @@ def get_alta_dir(date, task_id, beam_nr, data_type="raw", data_product=None, alt
         task_id (int): task id
         beam_nr (int): beam id
         alta_exception (bool): force 3 digits task id, old directory
+        data_type (str): Type of data to get, i.e, "raw" for unprocessed data or for ingested data "AP", "Mosaic", "QA"
+        data_product (str): Name of file to check on ALTA, i.e., to find any of the ingested data
 
     Returns:
         str: location in ALTA, including the date itself
