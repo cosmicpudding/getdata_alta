@@ -51,7 +51,7 @@ def parse_list(spec):
 ###################################################################################################
 
 
-def get_alta_dir(date, task_id, beam_nr, alta_exception):
+def get_alta_dir(date, task_id, beam_nr, data_type="raw", data_product=None, alta_exception):
     """Get the directory where stuff is stored in ALTA. Takes care of different historical locations
 
     Args:
@@ -78,20 +78,46 @@ def get_alta_dir(date, task_id, beam_nr, alta_exception):
     elif int(str(date)+'%.3d' % task_id) == 190326001:
         return "/altaZone/ingest/apertif_main/visibilities_default/{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS".format(**locals())
     else:
-        return "/altaZone/archive/apertif_main/visibilities_default/{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS".format(**locals())
+        # if it is raw (unprocessed) data
+        # check only necessary for survey data
+        if data_type == "raw":
+            return "/altaZone/archive/apertif_main/visibilities_default/{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS".format(**locals())
+        else:
+            # in case it is from temporary storage
+            if data_type == "temp_storage":
+                altadir = "/altaZone/home/apertif_main/early_results/temp_storage/{date}{task_id:03d}/B{beam_nr:02d}".format(
+                    **locals())
+            # in case the data product was created by the pipeline
+            elif data_type == "AP":
+                altadir = "/altaZone/archive/apertif_main/visibilities_default/{date}{task_id:03d}_{data_type}_B{beam_nr:03d}".format(
+                    **locals())
+            # in case it is a mosaic or QA
+            else:
+                altadir = "/altaZone/archive/apertif_main/visibilities_default/{date}{task_id:03d}_{data_type}".format(
+                    **locals())
+
+            # if no data product is specified, just check if the main directory exists
+            if dataproduct is not None:
+                altadir = os.path.join(altadir, data_product)
+
+            return altadir
+
 
 ###################################################################################################
 
 
-def getstatus_alta(date, task_id, beam):
+def getstatus_alta(date, task_id, beam, data_type="raw", data_product=None):
     """
     Funtion to check if the data is on ALTA.
-    date (int or str): Date of the observation of the data. Format: YYMMDD
     task_id (int or str): ID number of the observation. Format: NNN
+    date (int or str): Date of the observation of the data. Format: YYMMDD
     beam (int or str): Beam number to copy. Format: NN
+    data_type (str): Type of data to get, i.e, "raw" for unprocessed data or for ingested data "AP", "Mosaic", "QA"
+    data_product (str): Name of file to check on ALTA, i.e., to find any of the ingested data
     return (bool): True if the file is available, False if not
     """
-    altadir = get_alta_dir(date, int(task_id), int(beam), False)
+    altadir = get_alta_dir(date, int(task_id), int(
+        beam), False, data_type=data_type, data_product=data_product)
     cmd = "ils {}".format(altadir)
     retcode = subprocess.call(cmd.split(), stdout=FNULL, stderr=FNULL)
     return retcode == 0
@@ -99,7 +125,7 @@ def getstatus_alta(date, task_id, beam):
 ###################################################################################################
 
 
-def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exception=False, check_with_rsync=True):
+def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", data_type="raw", data_product=None, alta_exception=False, check_with_rsync=True):
     """Download data from ALTA using low-level IRODS commands.
     Report status to slack
 
@@ -109,6 +135,8 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exceptio
         beams (List[int] or int): list of beam numbers, or a single beam number (int)
         targetdir (str): directory to put the downloaded files
         tmpdir (str): directory for temporary files
+        data_type (str): Type of data to get, i.e, "raw" for unprocessed data or for ingested data "AP", "Mosaic", "QA"
+        data_product (str): Name of file to check on ALTA, i.e., to find any of the ingested data
         alta_exception (bool): force 3 digits task id, old directory
         check_with_rsync (bool): run rsync on the result of iget to verify the data got in
     """
@@ -142,10 +170,18 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exceptio
         for task_id in task_ids:
             logger.debug('Processing task ID %.3d' % task_id)
 
-            alta_dir = get_alta_dir(date, task_id, beam_nr, alta_exception)
-            cmd = "iget -rfPIT -X {tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.irods-status --lfrestart " \
-                  "{tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.lf-irods-status --retries 5 {alta_dir} " \
-                  "{targetdir}".format(**locals())
+            if data_type == "raw":
+                alta_dir = get_alta_dir(date, task_id, beam_nr, alta_exception)
+                cmd = "iget -rfPIT -X {tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.irods-status --lfrestart " \
+                    "{tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.lf-irods-status --retries 5 {alta_dir} " \
+                    "{targetdir}".format(**locals())
+            else:
+                alta_dir = get_alta_dir(
+                    date, task_id, beam_nr, alta_exception, data_type=data_type, data_product=data_product)
+                cmd = "iget -rfPIT -X {tmpdir}{date}{task_id:03d}_B{beam_nr:03d}-icat.irods-status --lfrestart " \
+                    "{tmpdir}{date}{task_id:03d}_B{beam_nr:03d}-icat.lf-irods-status --retries 5 {alta_dir} " \
+                    "{targetdir}".format(**locals())
+
             logger.debug(cmd)
             subprocess.check_call(cmd, shell=True, stdout=FNULL, stderr=FNULL)
 
@@ -159,15 +195,30 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exceptio
             for task_id in task_ids:
                 logger.info('Verifying task ID %.3d...' % task_id)
 
-                # Toggle for when we started using more digits:
-                alta_dir = get_alta_dir(date, task_id, beam_nr, alta_exception)
-                if targetdir == '.':
-                    local_dir = "{targetdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS"
+                # check if raw data was retrieved
+                if data_type == "raw":
+                    # Toggle for when we started using more digits:
+                    alta_dir = get_alta_dir(
+                        date, task_id, beam_nr, alta_exception)
+                    if targetdir == '.':
+                        local_dir = "{targetdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS"
+                    else:
+                        local_dir = targetdir
+                    cmd = "irsync -srl i:{alta_dir} {local_dir} >> " \
+                        "{tmpdir}transfer_WSRTA{date}{task_id:03d}_to_alta_verify.log".format(
+                            **locals())
                 else:
-                    local_dir = targetdir
-                cmd = "irsync -srl i:{alta_dir} {local_dir} >> " \
-                      "{tmpdir}transfer_WSRTA{date}{task_id:03d}_to_alta_verify.log".format(
-                          **locals())
+                    alta_dir = get_alta_dir(
+                        date, task_id, beam_nr, alta_exception, data_type=data_type, data_product=data_product)
+
+                    if targetdir == '.':
+                        local_dir = os.path.join(
+                            targetdir, os.path.basename(alta_dir))
+                    else:
+                        local_dir = targetdir
+                    cmd = "irsync -srl i:{alta_dir} {local_dir} >> " \
+                        "{tmpdir}transfer_{date}{task_id:03d}_B{beam_nr:03d}_to_alta_verify.log".format(
+                            **locals())
 
                 subprocess.check_call(
                     cmd, shell=True, stdout=FNULL, stderr=FNULL)
@@ -179,8 +230,12 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exceptio
         for task_id in task_ids:
             logger.debug('Checking failed files for task ID %.3d' % task_id)
 
-            cmd = 'grep N {tmpdir}transfer_WSRTA{date}{task_id:03d}_to_alta_verify.log | wc -l'.format(
-                **locals())
+            if data_type == "raw":
+                cmd = 'grep N {tmpdir}transfer_WSRTA{date}{task_id:03d}_to_alta_verify.log | wc -l'.format(
+                    **locals())
+            else:
+                cmd = 'grep N {tmpdir}transfer_{date}{task_id:03d}_B{beam_nr:03d}_to_alta_verify.log | wc -l'.format(
+                    **locals())
             output = os.popen(cmd)
             n_failed_files = output.read().split()[0]
             logger.warning('Number of failed files: %s', n_failed_files)
