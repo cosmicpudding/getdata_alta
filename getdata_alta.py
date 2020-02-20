@@ -87,7 +87,7 @@ def get_alta_dir(date, task_id, beam_nr, alta_exception, data_type="raw", data_p
         else:
             # in case it is from temporary storage
             if data_type == "temp_storage":
-                altadir = "/altaZone/home/apertif_main/early_results/temp_storage/{date}{task_id:03d}/B{beam_nr:02d}".format(
+                altadir = "/altaZone/home/apertif_main/early_results/temp_storage/{date}{task_id:03d}/{beam_nr:02d}".format(
                     **locals())
             # in case the data product was created by the pipeline
             elif data_type == "AP":
