@@ -212,12 +212,8 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", data_type="ra
                 else:
                     alta_dir = get_alta_dir(
                         date, task_id, beam_nr, alta_exception, data_type=data_type, data_product=data_product)
-
-                    if targetdir == '.':
-                        local_dir = os.path.join(
-                            targetdir, os.path.basename(alta_dir))
-                    else:
-                        local_dir = targetdir
+                    local_dir = os.path.join(
+                        targetdir, os.path.basename(alta_dir))
                     cmd = "irsync -srl i:{alta_dir} {local_dir} >> " \
                         "{tmpdir}transfer_{date}{task_id:03d}_B{beam_nr:03d}_to_alta_verify.log".format(
                             **locals())
