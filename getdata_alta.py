@@ -222,6 +222,7 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", data_type="ra
                         "{tmpdir}transfer_{date}{task_id:03d}_B{beam_nr:03d}_to_alta_verify.log".format(
                             **locals())
 
+                logger.debug(cmd)
                 subprocess.check_call(
                     cmd, shell=True, stdout=FNULL, stderr=FNULL)
 
