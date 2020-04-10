@@ -173,9 +173,18 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exceptio
                 #having issues with cmd, so be brave and bold!
                 #os.system(cmd)
                 subprocess.check_call(cmd, shell=True, stdout=FNULL, stderr=FNULL)
+                #tar out to correct file name
                 tarcmd = "tar -xf {targetdir}.tar".format(**locals())
                 logger.debug(tarcmd)
-                os.system(tarcmd)
+                subprocess.check_call(tarcmd, shell=True, stdout=FNULL, stderr=FNULL)
+                #have to rename
+                #change to targetdir
+                #know irignal fromatl
+                #but i have to worry about directory structure here and split
+                #out part of targetdir
+                #can maybe do that, but i've reached the end for today
+                os.rename(WSRTA{date}{task_id:03d}_B{beam_nr:03d}.format(**locals()),targetdir)
+                #os.system(tarcmd)
                 #remove tar file
                 logger.debug("Removing tar file")
                 os.remove("{targetdir}.tar".format(**locals()))
