@@ -155,7 +155,7 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exceptio
             logger.debug('Processing task ID %.3d' % task_id)
 
             alta_dir = get_alta_dir(date, task_id, beam_nr, alta_exception)
-            if alta_dir[-3] is not 'tar':
+            if alta_dir[-2:] == 'MS':
                 cmd = "iget -rfPIT -X {tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.irods-status --lfrestart " \
                       "{tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.lf-irods-status --retries 5 {alta_dir} " \
                       "{targetdir}".format(**locals())
@@ -168,7 +168,9 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exceptio
                       "{tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.lf-irods-status --retries 5 {alta_dir} " \
                       "{targetdir}.tar".format(**locals())
                 logger.debug(cmd)
-                subprocess.check_call(cmd, shell=True, stdout=FNULL, stderr=FNULL)
+                #having issues with cmd, so be brave and bold!
+                os.system(cmd)
+                #subprocess.check_call(cmd, shell=True, stdout=FNULL, stderr=FNULL)
                 tarcmd = "tar -xf {targetdir}.tar".format(**locals())
                 logger.debug(tarcmd)
                 os.system(tarcmd)
