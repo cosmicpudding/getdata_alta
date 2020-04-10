@@ -162,10 +162,13 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exceptio
             subprocess.check_call(cmd, shell=True, stdout=FNULL, stderr=FNULL)
             #check for tar file and untar:
             if alta_dir[-3:] == 'tar':
-                tarcmd = "tar -x {alta_dir}".format(**locals())
-                print(tarcmd)
+                tarcmd = "tar -xf {alta_dir}".format(**locals())
                 logger.debug(tarcmd)
-                subprocess.check_call(cmd, shell=True, stdout=FNULL, stderr=FNULL)
+                subprocess.check_call(tarcmd, shell=True, stdout=FNULL, stderr=FNULL)
+                #remove tar file
+                rmcmd = "rm {alta_dir}".format(**locals())
+                logger.debug(rmcmd)
+                subprocess.check_call(rmcmd, shell=True, stdout=FNULL, stderr=FNULL)
 
     os.system('rm -rf {tmpdir}*irods-status'.format(**locals()))
 
