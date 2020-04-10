@@ -164,11 +164,11 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exceptio
             if alta_dir[-3:] == 'tar':
                 tarcmd = "tar -xf {alta_dir}".format(**locals())
                 logger.debug(tarcmd)
-                subprocess.check_call(tarcmd, shell=True, stdout=FNULL, stderr=FNULL)
+                os.system(tarcmd)
                 #remove tar file
-                rmcmd = "rm {alta_dir}".format(**locals())
-                logger.debug(rmcmd)
-                subprocess.check_call(rmcmd, shell=True, stdout=FNULL, stderr=FNULL)
+                logger.debug("Removing tar file")
+                os.remove("{alta_dir}".format(**locals()))
+
 
     os.system('rm -rf {tmpdir}*irods-status'.format(**locals()))
 
