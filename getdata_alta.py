@@ -71,12 +71,24 @@ def get_alta_dir(date, task_id, beam_nr, alta_exception):
         >>> get_alta_dir(181205, 5, 35, False)
         '/altaZone/archive/apertif_main/visibilities_default/181205005/WSRTA181205005_B035.MS'
     """
+    #setup a test of cold data
+    #if ils is successful, get zero. otherwise 1024
+    #copy formatting from getstatus_alta
+    #some repetition here
+    #but quickest/dirtiest way to handle mix of cold/online data
+    #for apercal processing
+    altadir = "/altaZone/cold/apertif_main/visibilities_default/{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS.tar".format(**locals())
+    cmd = "ils {}".format(altadir)
+    testcold = subprocess.call(cmd.split(), stdout=FNULL, stderr=FNULL)
+    
     if int(date) < 180216:
         return "/altaZone/home/apertif_main/wcudata/WSRTA{date}{task_id:02d}/WSRTA{date}{task_id:02d}_B{beam_nr:03d}.MS".format(**locals())
     elif int(date) < 181003 or alta_exception:
         return "/altaZone/home/apertif_main/wcudata/WSRTA{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS".format(**locals())
     elif int(str(date)+'%.3d' % task_id) == 190326001:
         return "/altaZone/ingest/apertif_main/visibilities_default/{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS".format(**locals())
+    elif testcold == 0:
+        return "/altaZone/cold/apertif_main/visibilities_default/{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS.tar".format(**locals())
     else:
         return "/altaZone/archive/apertif_main/visibilities_default/{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS".format(**locals())
 
@@ -148,6 +160,12 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exceptio
                   "{targetdir}".format(**locals())
             logger.debug(cmd)
             subprocess.check_call(cmd, shell=True, stdout=FNULL, stderr=FNULL)
+            #check for tar file and untar:
+            if alta_dir[-3:] == 'tar':
+                tarcmd = "tar -x {alta_dir}".format(**locals())
+                print tarcmd
+                logger.debug(cmd)
+                subprocess.check_call(cmd, shell=True, stdout=FNULL, stderr=FNULL)
 
     os.system('rm -rf {tmpdir}*irods-status'.format(**locals()))
 
