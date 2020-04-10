@@ -164,13 +164,15 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exceptio
             #check for tar file and untar:
             elif alta_dir[-3:] == 'tar':
                 #get data copying to a tar file
+                #remove trailing slash from targetdir, causes all sorts of issues
+                targetdir = targetdir[:-1]
                 cmd = "iget -rfPIT -X {tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.irods-status --lfrestart " \
                       "{tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.lf-irods-status --retries 5 {alta_dir} " \
                       "{targetdir}.tar".format(**locals())
                 logger.debug(cmd)
                 #having issues with cmd, so be brave and bold!
-                os.system(cmd)
-                #subprocess.check_call(cmd, shell=True, stdout=FNULL, stderr=FNULL)
+                #os.system(cmd)
+                subprocess.check_call(cmd, shell=True, stdout=FNULL, stderr=FNULL)
                 tarcmd = "tar -xf {targetdir}.tar".format(**locals())
                 logger.debug(tarcmd)
                 os.system(tarcmd)
