@@ -155,15 +155,20 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exceptio
             logger.debug('Processing task ID %.3d' % task_id)
 
             alta_dir = get_alta_dir(date, task_id, beam_nr, alta_exception)
-            cmd = "iget -rfPIT -X {tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.irods-status --lfrestart " \
-                  "{tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.lf-irods-status --retries 5 {alta_dir} " \
-                  "{targetdir}".format(**locals())
-            logger.debug(cmd)
-            subprocess.check_call(cmd, shell=True, stdout=FNULL, stderr=FNULL)
+            if alta_dir[-3] is not 'tar':
+                cmd = "iget -rfPIT -X {tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.irods-status --lfrestart " \
+                      "{tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.lf-irods-status --retries 5 {alta_dir} " \
+                      "{targetdir}".format(**locals())
+                logger.debug(cmd)
+                subprocess.check_call(cmd, shell=True, stdout=FNULL, stderr=FNULL)
             #check for tar file and untar:
-            if alta_dir[-3:] == 'tar':
-                #first add tar extension to things
-                os.rename("{targetdir}".format(**locals()),"{targetdir}.tar".format(**locals()))
+            elif alta_dir[-3:] == 'tar':
+                #get data copying to a tar file
+                cmd = "iget -rfPIT -X {tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.irods-status --lfrestart " \
+                      "{tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.lf-irods-status --retries 5 {alta_dir} " \
+                      "{targetdir}.tar".format(**locals())
+                logger.debug(cmd)
+                subprocess.check_call(cmd, shell=True, stdout=FNULL, stderr=FNULL)
                 tarcmd = "tar -xf {targetdir}.tar".format(**locals())
                 logger.debug(tarcmd)
                 os.system(tarcmd)
