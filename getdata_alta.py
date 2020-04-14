@@ -185,8 +185,8 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exceptio
                 #can maybe do that, but i've reached the end for today
                 head, tail = os.path.split(targetdir)
                 print(head)
-                print(os.path.join(head,'WSRTA{date}{task_id:03d}_B{beam_nr:03d}'.format(**locals())))
-                os.rename(os.path.join(head,'WSRTA{date}{task_id:03d}_B{beam_nr:03d}'.format(**locals())),targetdir)
+                print(os.path.join(head,'WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS'.format(**locals())))
+                os.rename(os.path.join(head,'WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS'.format(**locals())),targetdir)
                 #os.system(tarcmd)
                 #remove tar file
                 logger.debug("Removing tar file")
