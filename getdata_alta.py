@@ -174,9 +174,13 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exceptio
                 #os.system(cmd)
                 subprocess.check_call(cmd, shell=True, stdout=FNULL, stderr=FNULL)
                 #tar out to correct file name
-                tarcmd = "tar -xf {targetdir}.tar".format(**locals())
+                #also send to correct location
+                head, tail = os.path.split(targetdir)
+                tarcmd = "tar -xf {targetdir}.tar -C {head}".format(**locals())
                 logger.debug(tarcmd)
-                subprocess.check_call(tarcmd, shell=True, stdout=FNULL, stderr=FNULL)
+                #subprocess.check_call(tarcmd, shell=True, stdout=FNULL, stderr=FNULL)
+                #force untarring
+                os.system(tarcmd)
                 #have to rename
                 #change to targetdir
                 #know irignal fromatl
@@ -186,6 +190,7 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exceptio
                 head, tail = os.path.split(targetdir)
                 print(head)
                 print(os.path.join(head,'WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS'.format(**locals())))
+                logger.debug("Rename untarred file to target name")
                 os.rename(os.path.join(head,'WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS'.format(**locals())),targetdir)
                 #os.system(tarcmd)
                 #remove tar file
