@@ -77,7 +77,8 @@ def get_alta_dir(date, task_id, beam_nr, alta_exception):
     #some repetition here
     #but quickest/dirtiest way to handle mix of cold/online data
     #for apercal processing
-    altadir = "/altaZone/cold/apertif_main/visibilities_default/{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS.tar".format(**locals())
+    #Data is now in stage, not cold
+    altadir = "/altaZone/stage/apertif_main/visibilities_default/{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS.tar".format(**locals())
     cmd = "ils {}".format(altadir)
     testcold = subprocess.call(cmd.split(), stdout=FNULL, stderr=FNULL)
     
@@ -88,7 +89,7 @@ def get_alta_dir(date, task_id, beam_nr, alta_exception):
     elif int(str(date)+'%.3d' % task_id) == 190326001:
         return "/altaZone/ingest/apertif_main/visibilities_default/{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS".format(**locals())
     elif testcold == 0:
-        return "/altaZone/cold/apertif_main/visibilities_default/{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS.tar".format(**locals())
+        return "/altaZone/stage/apertif_main/visibilities_default/{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS.tar".format(**locals())
     else:
         return "/altaZone/archive/apertif_main/visibilities_default/{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS".format(**locals())
 
