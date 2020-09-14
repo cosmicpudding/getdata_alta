@@ -71,13 +71,7 @@ def get_alta_dir(date, task_id, beam_nr, alta_exception):
         >>> get_alta_dir(181205, 5, 35, False)
         '/altaZone/archive/apertif_main/visibilities_default/181205005/WSRTA181205005_B035.MS'
     """
-    #setup a test of cold data
-    #if ils is successful, get zero. otherwise 1024
-    #copy formatting from getstatus_alta
-    #some repetition here
-    #but quickest/dirtiest way to handle mix of cold/online data
-    #for apercal processing
-    #Data is now in stage, not cold
+    #Test if data is in cold storage retrieval location
     altadir = "/altaZone/stage/apertif_main/visibilities_default/{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS.tar".format(**locals())
     cmd = "ils {}".format(altadir)
     testcold = subprocess.call(cmd.split(), stdout=FNULL, stderr=FNULL)
@@ -162,20 +156,14 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exceptio
                       "{targetdir}".format(**locals())
                 logger.debug(cmd)
                 subprocess.check_call(cmd, shell=True, stdout=FNULL, stderr=FNULL)
-            #check for tar file and untar:
+            #check for tar file and untar if needed:
             elif alta_dir[-3:] == 'tar':
-                #get data copying to a tar file
-                #remove trailing slash from targetdir, causes all sorts of issues
                 targetdir = targetdir[:-1]
                 cmd = "iget -rfPIT -X {tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.irods-status --lfrestart " \
                       "{tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.lf-irods-status --retries 5 {alta_dir} " \
                       "{targetdir}.tar".format(**locals())
                 logger.debug(cmd)
-                #having issues with cmd, so be brave and bold!
-                #os.system(cmd)
                 subprocess.check_call(cmd, shell=True, stdout=FNULL, stderr=FNULL)
-                #tar out to correct file name
-                #also send to correct location
                 head, tail = os.path.split(targetdir)
                 tarcmd = "tar -xf {targetdir}.tar -C {head}".format(**locals())
                 logger.debug(tarcmd)
@@ -183,17 +171,11 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exceptio
                 #force untarring
                 os.system(tarcmd)
                 #have to rename
-                #change to targetdir
-                #know irignal fromatl
-                #but i have to worry about directory structure here and split
-                #out part of targetdir
-                #can maybe do that, but i've reached the end for today
                 head, tail = os.path.split(targetdir)
                 print(head)
                 print(os.path.join(head,'WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS'.format(**locals())))
                 logger.debug("Rename untarred file to target name")
                 os.rename(os.path.join(head,'WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS'.format(**locals())),targetdir)
-                #os.system(tarcmd)
                 #remove tar file
                 logger.debug("Removing tar file")
                 os.remove("{targetdir}.tar".format(**locals()))
