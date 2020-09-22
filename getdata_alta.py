@@ -71,12 +71,19 @@ def get_alta_dir(date, task_id, beam_nr, alta_exception):
         >>> get_alta_dir(181205, 5, 35, False)
         '/altaZone/archive/apertif_main/visibilities_default/181205005/WSRTA181205005_B035.MS'
     """
+    #Test if data is in cold storage retrieval location
+    altadir = "/altaZone/stage/apertif_main/visibilities_default/{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS.tar".format(**locals())
+    cmd = "ils {}".format(altadir)
+    testcold = subprocess.call(cmd.split(), stdout=FNULL, stderr=FNULL)
+    
     if int(date) < 180216:
         return "/altaZone/home/apertif_main/wcudata/WSRTA{date}{task_id:02d}/WSRTA{date}{task_id:02d}_B{beam_nr:03d}.MS".format(**locals())
     elif int(date) < 181003 or alta_exception:
         return "/altaZone/home/apertif_main/wcudata/WSRTA{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS".format(**locals())
     elif int(str(date)+'%.3d' % task_id) == 190326001:
         return "/altaZone/ingest/apertif_main/visibilities_default/{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS".format(**locals())
+    elif testcold == 0:
+        return "/altaZone/stage/apertif_main/visibilities_default/{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS.tar".format(**locals())
     else:
         return "/altaZone/archive/apertif_main/visibilities_default/{date}{task_id:03d}/WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS".format(**locals())
 
@@ -143,11 +150,36 @@ def getdata_alta(date, task_ids, beams, targetdir=".", tmpdir=".", alta_exceptio
             logger.debug('Processing task ID %.3d' % task_id)
 
             alta_dir = get_alta_dir(date, task_id, beam_nr, alta_exception)
-            cmd = "iget -rfPIT -X {tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.irods-status --lfrestart " \
-                  "{tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.lf-irods-status --retries 5 {alta_dir} " \
-                  "{targetdir}".format(**locals())
-            logger.debug(cmd)
-            subprocess.check_call(cmd, shell=True, stdout=FNULL, stderr=FNULL)
+            if alta_dir[-2:] == 'MS':
+                cmd = "iget -rfPIT -X {tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.irods-status --lfrestart " \
+                      "{tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.lf-irods-status --retries 5 {alta_dir} " \
+                      "{targetdir}".format(**locals())
+                logger.debug(cmd)
+                subprocess.check_call(cmd, shell=True, stdout=FNULL, stderr=FNULL)
+            #check for tar file and untar if needed:
+            elif alta_dir[-3:] == 'tar':
+                targetdir = targetdir[:-1]
+                cmd = "iget -rfPIT -X {tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.irods-status --lfrestart " \
+                      "{tmpdir}WSRTA{date}{task_id:03d}_B{beam_nr:03d}-icat.lf-irods-status --retries 5 {alta_dir} " \
+                      "{targetdir}.tar".format(**locals())
+                logger.debug(cmd)
+                subprocess.check_call(cmd, shell=True, stdout=FNULL, stderr=FNULL)
+                head, tail = os.path.split(targetdir)
+                tarcmd = "tar -xf {targetdir}.tar -C {head}".format(**locals())
+                logger.debug(tarcmd)
+                #subprocess.check_call(tarcmd, shell=True, stdout=FNULL, stderr=FNULL)
+                #force untarring
+                os.system(tarcmd)
+                #have to rename
+                head, tail = os.path.split(targetdir)
+                print(head)
+                print(os.path.join(head,'WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS'.format(**locals())))
+                logger.debug("Rename untarred file to target name")
+                os.rename(os.path.join(head,'WSRTA{date}{task_id:03d}_B{beam_nr:03d}.MS'.format(**locals())),targetdir)
+                #remove tar file
+                logger.debug("Removing tar file")
+                os.remove("{targetdir}.tar".format(**locals()))
+
 
     os.system('rm -rf {tmpdir}*irods-status'.format(**locals()))
 
